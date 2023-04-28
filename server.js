@@ -1,6 +1,8 @@
 const express = require('express')
+const moment = require('moment');
 const jwt = require('jsonwebtoken')
 const UserModel = require('./models/UserModel');
+const BlogModel = require('./models/BlogModel');
 const SECRET = 'SECRET';
 
 //导入 mongoose
@@ -13,9 +15,8 @@ const app = express();
 app.use(express.json());
 
 app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
     next();
   });
 
@@ -62,19 +63,37 @@ app.post('/api/login', async(req, res) => {
     }
     const token = jwt.sign({
         id: String(user._id)
-    }, SECRET)
+    }, SECRET, { expiresIn: '7d' })
     res.send({
         user,
         token: token
     })
 })
 
-app.get('/api/profile', async(req, res) => {
-    const raw = String(req.headers.authorization).split(' ').pop();
-    const {id} = jwt.verify(raw, SECRET);
-    const user = await UserModel.findById(id);
-    res.send(user);
+app.get('/api/blog/showall', async(req, res) => {
+    const allblogs = await BlogModel.find().sort({time: -1})
+    res.send(allblogs);
 })
+
+app.post('/api/blog/add', async(req, res) => {
+    const blog = await BlogModel.create({
+        ...req.body,
+        time: { $currentDate: { $type: "date" } },
+      })
+    res.send(blog); 
+})
+
+app.delete('/api/blog/:id', async(req, res) => {
+    let id = req.params.id;
+    await BlogModel.deleteOne({_id: id});
+    res.send('删除成功');
+})
+
+app.patch('/api/blog/:id', async(req, res) => {
+    let {id} = req.params;
+    const blog = BlogModel.updateOne({_id: id}, {...req.body, time: { $currentDate: { $type: "date" }}});
+    res.send(blog);
+  });
 
 app.listen(3000, () => {
     console.log('ok');

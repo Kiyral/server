@@ -1,0 +1,13 @@
+const jwt = require('jsonwebtoken');
+module.exports = async (req, res, next) => {
+    const raw = String(req.headers.authorization).split(' ').pop();
+    const {id} = jwt.verify(raw, SECRET);
+    if(!id){
+        return res.status(422).send({
+            message: 'token不存在或已经过期'
+        })
+    }
+    const user = await UserModel.findById(id);
+    res.send(user);
+      next();
+  }
