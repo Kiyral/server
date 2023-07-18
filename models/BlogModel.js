@@ -10,13 +10,18 @@ let BlogSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    user_id: {
+    nickname: {
         type: String,
         required: true,
     },
     time: {
         type: Date,
-        required: true
+        required: true,
+        default: Date.now
+    },
+    like: {
+        type: Number,
+        default: 0
     }
 });
 
